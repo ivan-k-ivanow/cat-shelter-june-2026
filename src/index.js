@@ -1,26 +1,37 @@
 import http from 'http';
 import fs from 'fs/promises';
 import cats from './cats.js';
+import { addCat, readCats } from './catService.js';
 import { addBreed, readBreeds } from './breedService.js';
 
+
+
 const server = http.createServer(async (req, res) => {
+    console.log(readCats());
 
+    if (req.method === 'POST' && req.url === '/cats/add-cat') {
+       const bodyformData = await readBodyFormData(req);
+
+       const newCat = {
+        name: bodyformData.get('name'),
+        description: bodyformData.get('description'),
+        imageUrl: bodyformData.get('imageUrl'),
+        breed: bodyformData.get('breed')
+       }
+
+       addCat(newCat);
+
+       return res.writeHead(302, { 'Location': '/' }).end();
+    }
     if (req.method === 'POST' && req.url === '/cats/add-breed') {
-        let body = '';
+        const bodyformData = await readBodyFormData(req);
+           
+        const breedName = bodyformData.get('breed');
+        addBreed(breedName);
 
-        req.on('data', (chunk) => {
-            body += chunk;
-        });
-        req.on('end', async () => {
-            const formData = new URLSearchParams(body);
-            const breedName = formData.get('breed');
-            addBreed(breedName);
-        });
-
-        //Redirect to home page after adding the breed
         res.writeHead(302, { 'Location': '/' });
         return res.end();
-    }
+        };
 
     // GET Requests
     if (req.url === '/styles/site.css') {
@@ -92,4 +103,21 @@ async function renderAddCatPage() {
     const result = htmlContent.replace('{{breedOptions}}', breedOptions);
     return result;
 }
+
+
+function readBodyFormData(req) {
+    return new Promise((resolve, reject) => {
+        let body = '';
+
+        req.on('data', (chunk) => {
+            body += chunk;
+        });
+
+        req.on('end', () => {
+            const formData = new URLSearchParams(body);
+            resolve(formData);
+        });
+    });
+}
+
 server.listen(5000, () => console.log('Server is listening on http://localhost:5000...'));
