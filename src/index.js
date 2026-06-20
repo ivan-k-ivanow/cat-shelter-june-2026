@@ -4,7 +4,6 @@ import cats from './cats.js';
 import { addBreed, readBreeds } from './breedService.js';
 
 const server = http.createServer(async (req, res) => {
-    console.log(readBreeds());
 
     if (req.method === 'POST' && req.url === '/cats/add-breed') {
         let body = '';
@@ -51,7 +50,7 @@ const server = http.createServer(async (req, res) => {
             htmlContent = await fs.readFile('./src/views/addBreed.html', 'utf8');
             break;
         case '/cats/add-cat':
-            htmlContent = await fs.readFile('./src/views/addCat.html', 'utf8');
+            htmlContent = await renderAddCatPage();
             break; 
         default:
             htmlContent = await fs.readFile('./src/views/notFound.html', 'utf8');
@@ -61,8 +60,6 @@ const server = http.createServer(async (req, res) => {
     res.write(htmlContent);
     res.end();
 });
-
-server.listen(5000, () => console.log('Server is listening on http://localhost:5000...'));
 
 async function renderHomePage() {
     let htmlContent = await fs.readFile('./src/views/home/index.html', 'utf8');
@@ -85,3 +82,14 @@ async function renderHomePage() {
 
     return result;
 }
+
+
+async function renderAddCatPage() {
+    const htmlContent = await fs.readFile('./src/views/addCat.html', 'utf8');
+
+    const breedOptions = readBreeds().map(breed => `<option value="${breed.id}">${breed.name}</option>`).join('\n');
+
+    const result = htmlContent.replace('{{breedOptions}}', breedOptions);
+    return result;
+}
+server.listen(5000, () => console.log('Server is listening on http://localhost:5000...'));
