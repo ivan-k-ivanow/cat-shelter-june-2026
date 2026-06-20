@@ -4,6 +4,7 @@ import cats from './cats.js';
 import { addBreed, readBreeds } from './breedService.js';
 
 const server = http.createServer(async (req, res) => {
+    console.log(readBreeds());
 
     if (req.method === 'POST' && req.url === '/cats/add-breed') {
         let body = '';
