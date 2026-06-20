@@ -1,8 +1,11 @@
 import http from 'http';
+import fs from 'fs/promises';
 
+const server = http.createServer(async (req, res) => {
+    const homePage = await fs.readFile('./src/views/home/index.html', 'utf8');
 
-const server = http.createServer((req, res) => {
-    res.write('hello, world!\n');
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.write(homePage);
 
     res.end();
 });
