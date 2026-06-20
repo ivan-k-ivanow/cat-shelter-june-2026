@@ -1,0 +1,1 @@
+console.log('Script loaded and execuited in the browser context.')
