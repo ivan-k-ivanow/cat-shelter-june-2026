@@ -4,7 +4,6 @@ import cats from './cats.js';
 import { addBreed, readBreeds } from './breedService.js';
 
 const server = http.createServer(async (req, res) => {
-    console.log(readBreeds());
 
     if (req.method === 'POST' && req.url === '/cats/add-breed') {
         let body = '';
@@ -18,6 +17,8 @@ const server = http.createServer(async (req, res) => {
             addBreed(breedName);
         });
 
+        //Redirect to home page after adding the breed
+        res.writeHead(302, { 'Location': '/' });
         return res.end();
     }
 
