@@ -1,6 +1,6 @@
 import http from 'http';
 import fs from 'fs/promises';
-import { addCat, readCats } from './catService.js';
+import { addCat, readCats, getCatById } from './catService.js';
 import { addBreed, readBreeds } from './breedService.js';
 
 
@@ -57,9 +57,10 @@ const server = http.createServer(async (req, res) => {
     } else if (req.url === '/cats/add-cat') {
         htmlContent = await renderAddCatPage();
     } else if (req.url.startsWith('/cats/edit-cat/')) {
-        htmlContent = await renderEditCatPage();
+        const catId = req.url.split('/').pop();
+        htmlContent = await renderEditCatPage(catId);
     } else {
-        htmlContent = await fs.readFile('./src/views/notFound.html', 'utf8');
+        htmlContent = await renderNotFoundPage();
     }
 
     res.write(htmlContent);
@@ -89,6 +90,9 @@ async function renderHomePage() {
     return result;
 }
 
+async function renderNotFoundPage() {
+    return fs.readFile('./src/views/notFound.html', 'utf8');
+}
 
 async function renderAddCatPage() {
     const htmlContent = await fs.readFile('./src/views/addCat.html', 'utf8');
@@ -100,9 +104,20 @@ async function renderAddCatPage() {
 }
 
 async function renderEditCatPage(catId) {
+    const cat = getCatById(catId);
+
+    if (!cat) {
+        return await renderNotFoundPage();
+    }
+
     const htmlContent = await fs.readFile('./src/views/editCat.html', 'utf8');
 
-    return htmlContent;
+    const result = htmlContent
+        .replace('{{name}}', cat.name)
+        .replace('{{description}}', cat.description)
+        .replace('{{imageUrl}}', cat.imageUrl);
+
+    return result;
 
     function readBodyFormData(req) {
         return new Promise((resolve, reject) => {
