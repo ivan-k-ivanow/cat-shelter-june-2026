@@ -1,7 +1,7 @@
 import http from 'http';
 import fs from 'fs/promises';
 import { addCat, readCats, getCatById, editCat } from './catService.js';
-import { addBreed, readBreeds } from './breedService.js';
+import { addBreed, readBreeds, getBreedByName } from './breedService.js';
 
 
 
@@ -40,7 +40,7 @@ const server = http.createServer(async (req, res) => {
             name: editedCat.get('name'),
             description: editedCat.get('description'),
             imageUrl: editedCat.get('imageUrl'),
-            //breed: editedCat.get('breed')
+            breed: editedCat.get('breed')
         });
 
         res.writeHead(302, { 'Location': '/' });
@@ -75,6 +75,9 @@ const server = http.createServer(async (req, res) => {
     } else if (req.url.startsWith('/cats/edit-cat/')) {
         const catId = req.url.split('/').pop();
         htmlContent = await renderEditCatPage(catId);
+    } else if (req.url.startsWith('/cats/new-home/')) {
+        const catId = req.url.split('/').pop();
+        htmlContent = await renderNewHomePage(catId);
     } else {
         htmlContent = await renderNotFoundPage();
     }
@@ -94,7 +97,7 @@ async function renderHomePage() {
                     <p><span>Description: </span>${cat.description}</p>
                     <ul class="buttons">
                         <li class="btn edit"><a href="/cats/edit-cat/${cat.id}">Change Info</a></li>
-                        <li class="btn delete"><a href="">New Home</a></li>
+                        <li class="btn delete"><a href="/cats/new-home/${cat.id}">New Home</a></li>
                     </ul>
                 </li>`;
 
@@ -113,9 +116,7 @@ async function renderNotFoundPage() {
 async function renderAddCatPage() {
     const htmlContent = await fs.readFile('./src/views/addCat.html', 'utf8');
 
-    const breedOptions = readBreeds().map(breed => `<option value="${breed.id}">${breed.name}</option>`).join('\n');
-
-    const result = htmlContent.replace('{{breedOptions}}', breedOptions);
+    const result = htmlContent.replace('{{breedOptions}}', renderBreedOptions());
     return result;
 }
 
@@ -131,9 +132,36 @@ async function renderEditCatPage(catId) {
     const result = htmlContent
         .replace('{{name}}', cat.name)
         .replace('{{description}}', cat.description)
-        .replace('{{imageUrl}}', cat.imageUrl);
+        .replace('{{imageUrl}}', cat.imageUrl)
+        .replace('{{breedOptions}}', renderBreedOptions(cat.breed));
 
     return result;
+}
+
+async function renderNewHomePage(catId) {
+    const cat = getCatById(catId);
+    const breed = getBreedByName(cat.breed);
+
+    if (!cat) {
+        return await renderNotFoundPage();
+    }
+
+    const htmlContent = await fs.readFile('./src/views/catShelter.html', 'utf8');
+
+    const result = htmlContent
+        .replaceAll('{{name}}', cat.name)
+        .replace('{{description}}', cat.description)
+        .replace('{{imageUrl}}', cat.imageUrl)
+        .replace('{{breedId}}', breed.id)
+        .replace('{{breedName}}', breed.name)
+
+    return result;
+}
+
+function renderBreedOptions(selectedBreedId) {
+    const breeds = readBreeds();
+
+    return breeds.map(breed => `<option value="${breed.id}"${breed.name === selectedBreedId ? ' selected' : ''}>${breed.name}</option>`).join('\n');
 }
 
 function readBodyFormData(req) {
