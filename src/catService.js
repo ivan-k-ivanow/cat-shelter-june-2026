@@ -2,8 +2,14 @@ import cats from './cats.js';
 import { v4 } from 'uuid';
 import { getBreedById } from './breedService.js';
 
-export function readCats() {
-    return cats;
+export function readCats(filter = {}) {
+    let result = cats;
+
+    if (filter.name) {
+        result = result.filter(cat => cat.name.toLowerCase().includes(filter.name.toLowerCase()));
+    }
+
+    return result;
 }
 
 export function addCat(catData) {
