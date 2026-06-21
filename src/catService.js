@@ -31,3 +31,11 @@ export function editCat(catId, catData) {
         breed: getBreedById(catData.breed)?.name || 'Unknown Breed'
     };
 }
+
+export function deleteCat(catId) {
+    const catIndex = cats.findIndex(cat => cat.id === catId);
+    if (catIndex === -1) {
+        return new error('Cat not found');
+    }
+    cats.splice(catIndex, 1);
+};
