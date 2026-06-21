@@ -1,6 +1,6 @@
 import http from 'http';
 import fs from 'fs/promises';
-import { addCat, readCats, getCatById } from './catService.js';
+import { addCat, readCats, getCatById, editCat } from './catService.js';
 import { addBreed, readBreeds } from './breedService.js';
 
 
@@ -20,12 +20,28 @@ const server = http.createServer(async (req, res) => {
         addCat(newCat);
 
         return res.writeHead(302, { 'Location': '/' }).end();
-    }
+    };
+
     if (req.method === 'POST' && req.url === '/cats/add-breed') {
         const bodyformData = await readBodyFormData(req);
 
         const breedName = bodyformData.get('breed');
         addBreed(breedName);
+
+        res.writeHead(302, { 'Location': '/' });
+        return res.end();
+    };
+
+    if (req.method === 'POST' && req.url.startsWith('/cats/edit-cat/')) {
+        const catId = req.url.split('/').pop();
+        const editedCat = await readBodyFormData(req);
+
+        editCat(catId, {
+            name: editedCat.get('name'),
+            description: editedCat.get('description'),
+            imageUrl: editedCat.get('imageUrl'),
+            //breed: editedCat.get('breed')
+        });
 
         res.writeHead(302, { 'Location': '/' });
         return res.end();
@@ -118,21 +134,22 @@ async function renderEditCatPage(catId) {
         .replace('{{imageUrl}}', cat.imageUrl);
 
     return result;
-
-    function readBodyFormData(req) {
-        return new Promise((resolve, reject) => {
-            let body = '';
-
-            req.on('data', (chunk) => {
-                body += chunk;
-            });
-
-            req.on('end', () => {
-                const formData = new URLSearchParams(body);
-                resolve(formData);
-            });
-        });
-    }
 }
+
+function readBodyFormData(req) {
+    return new Promise((resolve, reject) => {
+        let body = '';
+
+        req.on('data', (chunk) => {
+            body += chunk;
+        });
+
+        req.on('end', () => {
+            const formData = new URLSearchParams(body);
+            resolve(formData);
+        });
+    });
+}
+
 
 server.listen(5000, () => console.log('Server is listening on http://localhost:5000...'));

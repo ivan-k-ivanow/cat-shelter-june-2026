@@ -25,16 +25,16 @@
         <form  method="post" class="cat-form">
             <h2>Edit Cat</h2>
             <label for="name">Name</label>
-            <input type="text" name= "name "id="name" value="{{name}}">
+            <input type="text" name="name"id="name" value="{{name}}">
             <label for="description">Description</label>
-            <textarea id="description">{{description}}</textarea>
+            <textarea id="description" name="description">{{description}}</textarea>
             <label for="image">Image</label>
             <input type="url" name="imageUrl" id="image" value="{{imageUrl}}">
-            <label for="group">Breed</label>
+            <label for="group" name="breed">Breed</label>
             <select id="group">
                 <option value="Fluffy Cat">Fluffy Cat</option>
             </select>
-            <button>Edit Cat</button>
+            <button type="submit">Edit Cat</button>
         </form>
     </main>
 </body>
