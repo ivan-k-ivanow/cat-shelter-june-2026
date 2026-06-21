@@ -1,71 +1,65 @@
 import http from 'http';
 import fs from 'fs/promises';
-import cats from './cats.js';
 import { addCat, readCats } from './catService.js';
 import { addBreed, readBreeds } from './breedService.js';
 
 
 
 const server = http.createServer(async (req, res) => {
-    console.log(readCats());
 
     if (req.method === 'POST' && req.url === '/cats/add-cat') {
-       const bodyformData = await readBodyFormData(req);
+        const bodyformData = await readBodyFormData(req);
 
-       const newCat = {
-        name: bodyformData.get('name'),
-        description: bodyformData.get('description'),
-        imageUrl: bodyformData.get('imageUrl'),
-        breed: bodyformData.get('breed')
-       }
+        const newCat = {
+            name: bodyformData.get('name'),
+            description: bodyformData.get('description'),
+            imageUrl: bodyformData.get('imageUrl'),
+            breed: bodyformData.get('breed')
+        }
 
-       addCat(newCat);
+        addCat(newCat);
 
-       return res.writeHead(302, { 'Location': '/' }).end();
+        return res.writeHead(302, { 'Location': '/' }).end();
     }
     if (req.method === 'POST' && req.url === '/cats/add-breed') {
         const bodyformData = await readBodyFormData(req);
-           
+
         const breedName = bodyformData.get('breed');
         addBreed(breedName);
 
         res.writeHead(302, { 'Location': '/' });
         return res.end();
-        };
+    };
 
     // GET Requests
     if (req.url === '/styles/site.css') {
         const cssContent = await fs.readFile('./src/styles/site.css', 'utf8');
-        res.writeHead(200, {'content-type' : 'text/css'});
+        res.writeHead(200, { 'content-type': 'text/css' });
         res.write(cssContent);
         return res.end()
     }
 
     if (req.url === '/js/script.js') {
         const jsContent = await fs.readFile('./src/js/script.js', 'utf8');
-        res.writeHead(200, {'content-type' : 'text/javascript'});
+        res.writeHead(200, { 'content-type': 'text/javascript' });
         res.write(jsContent);
         return res.end()
     }
-   
-   
+
+
     let htmlContent = '';
     res.writeHead(200, { 'Content-Type': 'text/html' });
 
-
-    switch (req.url) {
-        case '/':
-            htmlContent = await renderHomePage();
-            break;
-        case '/cats/add-breed':
-            htmlContent = await fs.readFile('./src/views/addBreed.html', 'utf8');
-            break;
-        case '/cats/add-cat':
-            htmlContent = await renderAddCatPage();
-            break; 
-        default:
-            htmlContent = await fs.readFile('./src/views/notFound.html', 'utf8');
-            break;
+    if (req.url === '/') {
+        htmlContent = await renderHomePage();
+    } else if (req.url === '/cats/add-breed') {
+        htmlContent = await fs.readFile('./src/views/addBreed.html', 'utf8');
+    } else if (req.url === '/cats/add-cat') {
+        htmlContent = await renderAddCatPage();
+    } else if (req.url.startsWith('/cats/edit-cat/')) {
+        htmlContent = await renderEditCatPage();
+    } else {
+        htmlContent = await fs.readFile('./src/views/notFound.html', 'utf8');
     }
 
     res.write(htmlContent);
@@ -82,11 +76,12 @@ async function renderHomePage() {
                     <p><span>Breed: </span>${cat.breed}</p>
                     <p><span>Description: </span>${cat.description}</p>
                     <ul class="buttons">
-                        <li class="btn edit"><a href="">Change Info</a></li>
+                        <li class="btn edit"><a href="/cats/edit-cat/${cat.id}">Change Info</a></li>
                         <li class="btn delete"><a href="">New Home</a></li>
                     </ul>
                 </li>`;
 
+    const cats = readCats();
     const catsContent = `<ul>${cats.map(cat => catTemplate(cat)).join('\n')}</ul>`;
 
     let result = htmlContent.replace('{{cats}}', catsContent);
@@ -104,20 +99,25 @@ async function renderAddCatPage() {
     return result;
 }
 
+async function renderEditCatPage(catId) {
+    const htmlContent = await fs.readFile('./src/views/editCat.html', 'utf8');
 
-function readBodyFormData(req) {
-    return new Promise((resolve, reject) => {
-        let body = '';
+    return htmlContent;
 
-        req.on('data', (chunk) => {
-            body += chunk;
+    function readBodyFormData(req) {
+        return new Promise((resolve, reject) => {
+            let body = '';
+
+            req.on('data', (chunk) => {
+                body += chunk;
+            });
+
+            req.on('end', () => {
+                const formData = new URLSearchParams(body);
+                resolve(formData);
+            });
         });
-
-        req.on('end', () => {
-            const formData = new URLSearchParams(body);
-            resolve(formData);
-        });
-    });
+    }
 }
 
 server.listen(5000, () => console.log('Server is listening on http://localhost:5000...'));
